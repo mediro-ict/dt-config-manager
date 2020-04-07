@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dt-config
+  namespace: mediro-ict
+  labels:
+    app: dt-config
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  #externalIPs:
+  #  - 105.208.44.111
+
+  selector:
+    app: dt-config
+status:
+  loadBalancer: {}
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: dt-config-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: dev.dtmanager.ca.vg-svc.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: dt-config
+          servicePort: 80
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: 
+  labels: 
+    app: dt-config
+  name: dt-config-pv-claim
+spec:
+  storageClassName: local-storage 
+  accessModes: 
+    - ReadWriteOnce
+  resources: 
+    requests: 
+      storage: 0.5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dt-config-deployment
+  namespace: mediro-ict
+  labels:
+    app: dt-config
+spec:
+  selector:
+    matchLabels:
+      app: dt-config
+  template:
+    metadata:
+      labels:
+        app: dt-config
+    spec:
+      imagePullSecrets:
+        - name: mediro-ict-reg
+      containers:
+      - name: dt-config
+        image: registry.mediro.kryptos.co.za:4567/mediro-ict/sql_custom_plugin:latest
+        env:
+        - name: APP_THEME
+          value: "spacelab.css"
+        #command: ["/bin/sh"]
+        #args: ["-c", "flask fab create-db"]
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: dt-config-persistent-volume
+          mountPath: /app/data
+      volumes:
+      - name: dt-config-persistent-volume
+        persistentVolumeClaim:
+          claimName: dt-config-pv-claim
