@@ -12,9 +12,6 @@ spec:
     port: 80
     targetPort: 80
     protocol: TCP
-  #externalIPs:
-  #  - 105.208.44.111
-
   selector:
     app: dt-config
 status:
@@ -55,7 +52,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dt-config-deployment
+  name: dt-config
   namespace: mediro-ict
   labels:
     app: dt-config
